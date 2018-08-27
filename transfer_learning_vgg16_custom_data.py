@@ -14,6 +14,7 @@ from sklearn.utils import shuffle
 from sklearn.cross_validation import train_test_split
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 import tensorflow as tf
+from keras.callbacks import Tensorboard
 
 #img_path = 'Image_Chips/AL012018_Alberto/AL012018_Alberto_201805251200_CMI_C09_35.jpg'
 #img = image.load_img(img_path, target_size=(224, 224))
@@ -107,12 +108,14 @@ with tf.device('/cpu:0'):
     # (std, mean, and principal components if ZCA whitening is applied)
     datagen.fit(X_train)
     
+    
+    tensorboard = TensorBoard(log_dir="logs/{}".format(time()))
     # fits the model on batches with real-time data augmentation:
     hist = custom_vgg_model.fit_generator(datagen.flow(X_train, y_train, batch_size=batch_size),
-                        steps_per_epoch=len(X_train) / batch_size, epochs=epochs, verbose=1, shuffle=True)
+                        steps_per_epoch=len(X_train) / batch_size, epochs=epochs, verbose=1, shuffle=True, callbacks = [tensorboard])
 
 
-    custom_vgg_model.save_weights('first_try.h5')  # always save your weights after training or during training
+    custom_vgg_model.save_weights('logs/first_try.h5')  # always save your weights after training or during training
     score = custom_vgg_model.evaluate(X_test, y_test, verbose=1)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])

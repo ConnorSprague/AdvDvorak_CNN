@@ -17,6 +17,8 @@ from keras import backend as K
 import GOES_processing as gp
 import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+from keras.callbacks import Tensorboard
+from time import time
 
 ######################  Processing --> GOES_processing.py
 filepath = 'combined_images_3'
@@ -74,16 +76,17 @@ with tf.device('/cpu:0'):
     shear_range=0.2,
     channel_shift_range=2.0)
 
+    tensorboard = TensorBoard(log_dir="logs/{}".format(time()))
     # compute quantities required for featurewise normalization
     # (std, mean, and principal components if ZCA whitening is applied)
-    datagen.fit(x_train)
+    datagen.fit(x_train, callbacks = [tensorboard])
     
     # fits the model on batches with real-time data augmentation:
     hist = model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
                         steps_per_epoch=len(x_train) / batch_size, epochs=epochs, verbose=1, shuffle=True)
 
 
-    model.save_weights('first_try.h5')  # always save your weights after training or during training
+    model.save_weights('logs/first_try.h5')  # always save your weights after training or during training
     score = model.evaluate(x_test, y_test, verbose=1)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
